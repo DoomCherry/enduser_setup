@@ -1080,6 +1080,45 @@ static void enduser_setup_serve_status_as_json (struct tcp_pcb *http_client)
   enduser_setup_http_serve_header (http_client, buf, len);
 }
 
+static void enduser_setup_serve_status_lua_as_json (struct tcp_pcb *http_client, char* json_payload)
+{
+  ENDUSER_SETUP_DEBUG("enduser_setup_serve_status_as_json");
+  /* If the station is currently shut down because of wi-fi channel issue, use the cached status */
+  uint8_t curr_status = state->lastStationStatus > 0 ? state->lastStationStatus : wifi_station_get_connect_status ();
+
+    struct ip_info ip_info;
+
+    if (curr_status == 5)
+    {
+      wifi_get_ip_info(STATION_IF , &ip_info);
+      /* If IP address not yet available, get now */
+      if (strlen(ipaddr) == 0)
+      {
+        sprintf(ipaddr, "%d.%d.%d.%d", IP2STR(&ip_info.ip.addr));
+      }
+      sprintf(json_payload, "{\"deviceid\":\"%s\", \"status\":%d}", ipaddr, curr_status);
+    }
+    else
+    {
+      sprintf(json_payload, "{\"deviceid\":\"%06X\", \"status\":%d}", system_get_chip_id(), curr_status);
+    }
+
+  const char fmt[] =
+    "HTTP/1.1 200 OK\r\n"
+    "Cache-Control: no-cache\r\n"
+    "Connection: close\r\n"
+    "Access-Control-Allow-Origin: *\r\n"
+    "Content-Type: application/json\r\n"
+    "Content-Length: %d\r\n"
+    "\r\n"
+    "%s";
+
+  int len = strlen(json_payload);
+  char buf[strlen(fmt) + NUMLEN(len) + len - 4];
+  len = sprintf (buf, fmt, len, json_payload);
+  enduser_setup_http_serve_header (http_client, buf, len);
+}
+
 
 static void enduser_setup_handle_OPTIONS (struct tcp_pcb *http_client, char *data, unsigned short data_len)
 {
@@ -1415,7 +1454,7 @@ static err_t enduser_setup_http_recvcb(void *arg, struct tcp_pcb *http_client, s
     }
     else if (strncmp(data + 4, "/config", 7) == 0)
     {
-    	enduser_setup_serve_status_as_json(http_client);
+    	enduser_setup_serve_status_lua_as_json(http_client,"Privet");
     }
     else if (strncmp(data + 4, "/status", 7) == 0)
     {
