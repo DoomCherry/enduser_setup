@@ -1107,7 +1107,8 @@ static void enduser_setup_handle_OPTIONS (struct tcp_pcb *http_client, char *dat
 
   if (strncmp(data, "GET ", 4) == 0)
   {
-    if (strncmp(data + 4, "/aplist", 7) == 0 || strncmp(data + 4, "/setwifi?", 9) == 0 || strncmp(data + 4, "/status.json", 12) == 0)
+    if (strncmp(data + 4, "/aplist", 7) == 0 || strncmp(data + 4, "/setwifi?", 9) == 0 || strncmp(data + 4, "/status.json", 12) == 0
+    		|| strncmp(data + 4, "/config", 7) == 0)
     {
       enduser_setup_http_serve_header (http_client, json, strlen(json));
       return;
@@ -1411,6 +1412,10 @@ static err_t enduser_setup_http_recvcb(void *arg, struct tcp_pcb *http_client, s
     else if (strncmp(data + 4, "/status.json", 12) == 0)
     {
     enduser_setup_serve_status_as_json(http_client);
+    }
+    else if (strncmp(data + 4, "/config", 7) == 0)
+    {
+    	enduser_setup_serve_status_as_json(http_client);
     }
     else if (strncmp(data + 4, "/status", 7) == 0)
     {
