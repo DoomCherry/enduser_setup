@@ -1454,10 +1454,10 @@ static err_t enduser_setup_http_recvcb(void *arg, struct tcp_pcb *http_client, s
     enduser_setup_serve_status_as_json(http_client);
     }
     else if (strncmp(data + 4, "/config", 7) == 0)
-    {
-    	char* str = "privet";
-    	enduser_setup_serve_status_lua_as_json(http_client,str);
-    }
+        {
+          char* err1 = openLua("HeloVeacheslav.lua");
+    	   enduser_setup_serve_status(http_client,err1);
+        }
     else if (strncmp(data + 4, "/status", 7) == 0)
     {
     	enduser_setup_serve_status(http_client,"idle");
