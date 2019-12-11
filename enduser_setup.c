@@ -950,7 +950,7 @@ static int enduser_setup_http_serve_html(struct tcp_pcb *http_client)
 }
 
 
-static void enduser_setup_serve_status(struct tcp_pcb *conn)
+static void enduser_setup_serve_status(struct tcp_pcb *conn, char* str)
 {
   ENDUSER_SETUP_DEBUG("enduser_setup_serve_status");
 
@@ -963,15 +963,16 @@ static void enduser_setup_serve_status(struct tcp_pcb *conn)
     "Content-length: %d\r\n"
     "\r\n"
     "%s";
-  const char *states[] =
+  char *states[] =
   {
-    "Idle.",
+    str,
     "Connecting to \"%s\".",
     "Failed to connect to \"%s\" - Wrong password.",
     "Failed to connect to \"%s\" - Network not found.",
     "Failed to connect.",
     "Connected to \"%s\" (%s)."
   };
+
 
   const size_t num_states = sizeof(states)/sizeof(states[0]);
   uint8_t curr_state = state->lastStationStatus > 0 ? state->lastStationStatus : wifi_station_get_connect_status ();
@@ -984,7 +985,7 @@ static void enduser_setup_serve_status(struct tcp_pcb *conn)
       case STATION_NO_AP_FOUND:
       case STATION_GOT_IP:
       {
-        const char *s = states[curr_state];
+        char *s = states[curr_state];
         struct station_config config;
         wifi_station_get_config(&config);
         config.ssid[31] = '\0';
@@ -1020,7 +1021,7 @@ static void enduser_setup_serve_status(struct tcp_pcb *conn)
       /* Handle non-formatted strings */
       default:
       {
-        const char *s = states[curr_state];
+        char *s = states[curr_state];
         int status_len = strlen(s);
         int buf_len = sizeof(fmt) + status_len + 10; /* 10 = (9+1), 1 byte is '\0' and 9 are reserved for length field */
         char buf[buf_len];
@@ -1454,11 +1455,12 @@ static err_t enduser_setup_http_recvcb(void *arg, struct tcp_pcb *http_client, s
     }
     else if (strncmp(data + 4, "/config", 7) == 0)
     {
-    	enduser_setup_serve_status_lua_as_json(http_client,"Privet");
+    	char* str = "privet";
+    	enduser_setup_serve_status_lua_as_json(http_client,str);
     }
     else if (strncmp(data + 4, "/status", 7) == 0)
     {
-      enduser_setup_serve_status(http_client);
+    	enduser_setup_serve_status(http_client,"idle");
     }
 
     else if (strncmp(data + 4, "/update?", 8) == 0)
